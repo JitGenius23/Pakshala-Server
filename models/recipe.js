@@ -12,9 +12,9 @@ const recipeSchema = new mongoose.Schema({
     unique: true,
     required: true,
   },
-  ingredients: [{ type: String, required: true }], // List of ingredients
+  ingredients: { type: [String], required: true }, // List of ingredients
   makingProcess: { type: String, required: true }, // Step-by-step cooking process
-  image: { type: String }, // URL to the recipe image
+  images: [{type: String, required: true}], // URL to the recipe image
   categoryName: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Category",  

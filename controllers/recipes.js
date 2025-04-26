@@ -1,15 +1,22 @@
 const express = require("express");
 const router = express.Router();
-const countryDB = require("../models/country");
-const stateDB = require("../models/state");
 const cityDB = require("../models/city");
 const categoryDB = require("../models/category");
 const recipeDB = require("../models/recipe");
+const upload = require("../config/multerconfig");
+// const ErrorHandler = require('../public/javascript/ErrorHandler');
 
 // Create a new recipe
-router.post("/create", async (req, res) => {
-  const { cityName, categoryName, recipeName, ingredients, makingProcess } =
-    req.body;
+router.post("/create", upload.array("images", 5), async (req, res) => {
+   
+  const {
+    cityName,
+    categoryName,
+    recipeName,
+    ingredients,
+    makingProcess,
+    images,
+  } = req.body;
 
   let categoryId = "";
   let cityId = "";
@@ -42,12 +49,17 @@ router.post("/create", async (req, res) => {
       .json({ success: false, message: "recipe already exists!" });
   }
 
+  // Extract each uploaded image path
+  const imagePath = req.files.map((file) => file.filename);
+  const ingredientsArray = ingredients.split(',').map((ing) => ing.trim());
+
   const newRecipe = await recipeDB.create({
     recipeName,
-    ingredients,
+    ingredients: ingredientsArray,
     makingProcess,
     city: cityId,
     categoryName: categoryId,
+    images: imagePath,
   });
 
   categoryExists.recipes.push(newRecipe._id);
@@ -58,7 +70,7 @@ router.post("/create", async (req, res) => {
 });
 
 // View all recipes
-router.get("/recipes", async (req, res) => {
+router.get("/recipes", async (req, res, next) => {
   const recipes = await recipeDB.find();
   res.json(recipes);
 });
@@ -66,6 +78,11 @@ router.get("/recipes", async (req, res) => {
 // View a recipe by recipe ID
 router.get("/recipe/:id", async (req, res) => {
   const recipe = await recipeDB.findById(req.params.id);
+  if (recipe.images && recipe.images.length > 0) {
+    recipe.images = recipe.images.map(
+      (image) => `http://localhost:3000/${image}`
+    );
+  }
   res.json(recipe);
 });
 
